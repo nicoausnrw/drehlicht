@@ -30,85 +30,43 @@ void writeRegister(uint16_t reg, byte value){
 // TODO Welche davon benötige ich wirklich
 
 // Beschleuniguns Sensor -------------------------------------------------------
+#define MPU6050_ADDR              0x68 // Alternatively set AD0 to HIGH  --> Address = 0x69
+#define MPU6050_ACCEL_CONFIG      0x1C // Accelerometer Configuration Register
 #define MPU6050_PWR_MGT_1         0x6B // Power Management 1 Register
 #define MPU6050_INT_PIN_CFG       0x37 // Interrupt Pin / Bypass Enable Configuration Register
-#define MPU6050_INT_ENABLE        0x38 //## Interrupt Enable Register
-//#define MPU6050_LATCH_INT_EN      0x05 // Latch Enable Bit for Interrupt 
-    #define MPU6050_ACTL              0x07 // Active-Low Enable Bit
-    #define MPU6050_WOM_EN            0x06 //## Wake on Motion Enable bit
-#define MPU6050_WOM_THR           0x1F //## Wake on Motion Threshold Register
-#define MPU6050_MOT_DUR           0x20 //## Motion Detection Duration Register
-
-#define MPU6050_ACCEL_CONFIG      0x1c
-// aus der Doku gezogen keine Ahnung ob das Hilft
-//#define MPU6050_ACCEL_INTEL_CTRL  0x69 // Accelaration Interrupt Control Register
+#define MPU6050_INT_ENABLE        0x38 // Interrupt Enable Register
+#define MPU6050_LATCH_INT_EN      0x05 // Latch Enable Bit for Interrupt 
+#define MPU6050_ACTL              0x07 // Active-Low Enable Bit
+#define MPU6050_WOM_EN            0x06 // Wake on Motion Enable bit
+#define MPU6050_WOM_THR           0x1F // Wake on Motion Threshold Register
+#define MPU6050_MOT_DUR           0x20 // Motion Detection Duration Register
+#define MPU6050_ACCEL_INTEL_CTRL  0x69 // Accelaration Interrupt Control Register
 #define MPU6050_SIGNAL_PATH_RESET 0x68 // Signal Path Reset Register
 
 
-
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 void setInterrupt(byte threshold){
 //writeRegister(MPU6050_SIGNAL_PATH_RESET, 0b00000111);  // not(?) needed
-writeRegister(MPU6050_INT_PIN_CFG, 1<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
+//writeRegister(MPU6050_INT_PIN_CFG, 1<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
   writeRegister(MPU6050_ACCEL_CONFIG, 0b00000001);
   writeRegister(MPU6050_WOM_THR, threshold); 
-  writeRegister(MPU6050_MOT_DUR, 0b00000001);  // set duration (LSB = 1 ms)
+  writeRegister(MPU6050_MOT_DUR, 50);  // set duration (LSB = 1 ms) // wie Lang soll "die Bewegung" sein. angabe in ms
 //writeRegister(MPU6050_ACCEL_INTEL_CTRL, 0x15);  // not needed (?)
   writeRegister(MPU6050_INT_ENABLE, 1<<MPU6050_WOM_EN);
-  Serial.println("LÄUFT");
 }
 
 
 
-void setInterrupt3(byte threshold){
-  writeRegister(MPU6050_SIGNAL_PATH_RESET, 0b00000111);  // not(?) needed
-  
-  writeRegister(MPU6050_INT_PIN_CFG, 1<<0x06); // 1<<MPU6050_LATCH_INT_EN
-  writeRegister(MPU6050_INT_PIN_CFG, 0<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
-  writeRegister(MPU6050_INT_ENABLE, 1<<0x00);
-  
-  writeRegister(MPU6050_ACCEL_CONFIG, 0b00000001);
-  writeRegister(MPU6050_WOM_THR, threshold); 
-  writeRegister(MPU6050_MOT_DUR, 0b00000001);  // set duration (LSB = 1 ms)
-  //writeRegister(MPU6050_ACCEL_INTEL_CTRL, 0x15);  // not needed (?)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+void disableInterrupt(){
   writeRegister(MPU6050_INT_ENABLE, 0<<MPU6050_WOM_EN);
 }
 
-
-
-
-void setInterrupt2(byte threshold){
-  writeRegister(MPU6050_SIGNAL_PATH_RESET, 0b00000111);  // not(?) needed
-  writeRegister(MPU6050_INT_PIN_CFG, 0<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
-  writeRegister(MPU6050_ACCEL_CONFIG, 0b00000001);
-  writeRegister(MPU6050_WOM_THR, threshold); 
-  writeRegister(MPU6050_MOT_DUR, 0b00000001);  // set duration (LSB = 1 ms)
-  //writeRegister(MPU6050_ACCEL_INTEL_CTRL, 0x15);  // not needed (?)
-  writeRegister(MPU6050_INT_ENABLE, 1<<MPU6050_WOM_EN);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void disableInterrupt(){
-  //setInterrupt(255);
-  if(true){
-  writeRegister(MPU6050_SIGNAL_PATH_RESET, 0b00000111);  // not(?) needed
-  writeRegister(MPU6050_INT_PIN_CFG, 0<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
-  writeRegister(MPU6050_INT_PIN_CFG, 0<<0x06); //
-  writeRegister(MPU6050_INT_PIN_CFG, 0<<0x02); //
-  writeRegister(MPU6050_ACCEL_CONFIG, 0b00000001);
-  writeRegister(MPU6050_WOM_THR, 255); 
-  writeRegister(MPU6050_MOT_DUR, 0b00000001);  // set duration (LSB = 1 ms)
-  //writeRegister(MPU6050_ACCEL_INTEL_CTRL, 0x15);  // not needed (?)
-
-  writeRegister(MPU6050_INT_ENABLE, 0x00 );
-}
-
-}
 /*
-
-
 okay, es ist eine große Herrausforderung den ESP8266 mit dem MPU6050 zu wecken, eine Idee die mir noch gekommen ist den GPIO16 zu nehmen und damit erstmal den RESET Pin zu blocken da der 16ner HIGH at boot ist. 
 denn müsste ich dann erstmal high halten. Dann wäre interannst was passiert wenn ich low gehe mit dem MPU, hier mal mit Bruno sprechen und dann am besten Andy der mir mit dem REsiger vom MPU helfen kann.
 eventuell kann ich ja einfach GPIO16 dauerhaft high lassen und damit dem rest pin blocken.  Eventuell irgendwo Wiedersände dazwischen damit das klappt.
@@ -124,7 +82,7 @@ Plan C ist ein Rest Button am Glas
 
 
 int modus = 0; // 0 = Glas steht, 1 = Glas Liegt;
-
+boolean geradeHochgefahren = true;
 
 // Settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,16 +98,14 @@ int rgbFaktor = 3;
 int SaettigungFaktor = 3;
 
 // nach wieviel sec soll die Lampe in den Deep Sleep.
-int secBisDeepSleep = 5; 
-
+int secBisDeepSleep = 2; 
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 #define LED_PIN 14
-#define NUM_LEDS 12
-#define WAKEUP_PIN 12
+#define NUM_LEDS 24
 CRGB leds[NUM_LEDS];
 
 unsigned long previousMillis;  // speichert die vergangene Zeit in Millisekunden
@@ -169,7 +125,9 @@ unsigned long startZeitLichtAus = 0;  // Wenn das licht das erste mal aus geht, 
 
 float differenz; // Differenz jetziger und letzter Winkel.
 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 void IRAM_ATTR wakeUp(){ // das IRAM_ATTR braucht man bei dem ESP8266 um eine Interupt Funktion für den ESP klar zumachen, diese funktion rufe ich später auf. Details dazu: https://www.arduinoforum.de/arduino-Thread-Interrupt-Routinren-bei-ESP 
   // startZeitLichtAus = 0;
@@ -225,7 +183,7 @@ void korrektur(boolean firstTime = false){
 
 void runterfahren(){
 
-  setInterrupt(15); // set Wake on Motion Interrupt / Sensitivity; 1(highest sensitivity) - 255
+  setInterrupt(50); // set Wake on Motion Interrupt / Sensitivity; 1(highest sensitivity) - 255
 
   Serial.println("ciao ciao");
 
@@ -261,7 +219,7 @@ void checkSleep(){
 
 // 0 = Steh Modus, 1 Liegt Mouds, 2 Kopfüber Modus
 void setLightStyle(int modus, float differenz){
-       
+
         // Funktion wird nur ausgelöst wenn Differenz seit der letzten prüfung groß genug ist
         if( differenz > 0.2 || differenz < -0.2){
         
@@ -317,52 +275,48 @@ void setLightStyle(int modus, float differenz){
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-const int gpioPin = 12;
+
 
 void setup() {
   Serial.begin(9600);
-setInterrupt(1);
 
-    pinMode(gpioPin, INPUT); // DEBUG
 
   // SETUP LEDs
   FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
-  FastLED.setBrightness(255);
-  fill_solid(leds, NUM_LEDS, CHSV(hueColor, hueSaettigung, hueHelligkeit));
+  FastLED.setBrightness(64);
 
-  FastLED.show();
+
 
 
   Wire.begin();
   mpu6050.begin();
-  
-  //disableInterrupt();
-  
-  mpu6050.calcOffsets(true,false);
-  saveWinkel();
 
-
-
-  if(false){
-    // Beschleuniguns Sensor ------------------------------------------------------------------------------------------------------------------------
-    //Wire.begin();
+  // TODO nicht sicher ob ich das brauche
     writeRegister(MPU6050_PWR_MGT_1, 0);
 
-  // Konfiguriere den GPIO12-Pin als Wake-up-Pin
-    pinMode(WAKEUP_PIN, INPUT_PULLUP);
-    attachInterrupt(digitalPinToInterrupt(WAKEUP_PIN), wakeUp, RISING);
-  }
+  
+  disableInterrupt();
+
+
+
+
 
 
 }
 
 void loop() {
 
-//DEBUG
-  pinMode(gpioPin, INPUT); // DEBUG
-  if (digitalRead(gpioPin) == HIGH) {
-    Serial.println("Pang pang");};
+if(geradeHochgefahren){
+  geradeHochgefahren = false;
 
+
+  fill_solid(leds, NUM_LEDS, CHSV(hueColor, hueSaettigung, hueHelligkeit));
+  FastLED.show();
+  
+  mpu6050.calcOffsets(true,false);
+  saveWinkel();
+
+}
 
 
 
