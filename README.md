@@ -26,3 +26,27 @@ In Planung ist noch das man mit Schütteln das Glas ein und ausschalten kann und
   - Platine die Komponenten Hält
   - Hauptschalter mit einbauen
   - 3D Druck Halterung für alles!
+
+
+
+## Material Liste
+
+
+
+- LEDs (Ringlicht 24 Neonpixel)
+- Wemos D1 mini
+- MPU6050
+- Akku
+- NPN Transistor
+- 4,7K Wiederstand
+- Akku Halterung
+- Glas
+- Platine
+- 3D Druck
+- Ladekabel
+- Ladecontroller
+- Füllmaterial
+- Ladegerät?
+
+ca 35€
+

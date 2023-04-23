@@ -7,7 +7,57 @@
 #include <FastLED.h>
 
 
+
+// Settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Default bei Start
+int hueHelligkeit = 128;
+int hueColor = 108;
+int hueSaettigung = 200;
+
+// Drehempfindlichkeit
+int hellFaktor = 6;
+int rgbFaktor = 3;
+int SaettigungFaktor = 3;
+
+// nach wieviel sec soll die Lampe in den Deep Sleep.
+int secBisDeepSleep = 2; 
+
+// LEDs
+#define LED_PIN 12
+#define NUM_LEDS 24
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+CRGB leds[NUM_LEDS];
+
+
+int modus = 0; // 0 = Glas steht, 1 = Glas Liegt;
+boolean geradeHochgefahren = true;
+
+
+unsigned long previousMillis;  // speichert die vergangene Zeit in Millisekunden
+unsigned long currentMillis; // speichert später die aktuelle Zeit in Millisekunden für das abarbeiten des Loops.
+
+const unsigned long interval = 20; // die Zeit in Millisekunden zwischen jeder Überprüfung - 20ms sind  50Hz / 50fps
+
+int count = 0; //helfer damit ich jede sec einen Wert Anzeige.
+
+// Speicherplatz für Winkeldaten.
+float jetzigerWinkel[3];
+float letzterWinkel[3];
+float durschnittAbweichung[3];  // kann vermutlich weg
+
+unsigned long startZeitLichtAus = 0;  // Wenn das licht das erste mal aus geht, speichere ich die Laufzeittime und kann diese nutzen um in den DeepSleep zu gehen
+
+
+float differenz; // Differenz jetziger und letzter Winkel.
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,6 +100,7 @@ void writeRegister(uint16_t reg, byte value){
 void setInterrupt(byte threshold){
 //writeRegister(MPU6050_SIGNAL_PATH_RESET, 0b00000111);  // not(?) needed
 //writeRegister(MPU6050_INT_PIN_CFG, 1<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
+//writeRegister(MPU6050_INT_PIN_CFG, 1<<MPU6050_LATCH_INT_EN); // 1<<MPU6050_LATCH_INT_EN
   writeRegister(MPU6050_ACCEL_CONFIG, 0b00000001);
   writeRegister(MPU6050_WOM_THR, threshold); 
   writeRegister(MPU6050_MOT_DUR, 50);  // set duration (LSB = 1 ms) // wie Lang soll "die Bewegung" sein. angabe in ms
@@ -77,57 +128,6 @@ Plan C ist ein Rest Button am Glas
 */
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-int modus = 0; // 0 = Glas steht, 1 = Glas Liegt;
-boolean geradeHochgefahren = true;
-
-// Settings
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Default bei Start
-int hueHelligkeit = 128;
-int hueColor = 108;
-int hueSaettigung = 200;
-
-// Drehempfindlichkeit
-int hellFaktor = 6;
-int rgbFaktor = 3;
-int SaettigungFaktor = 3;
-
-// nach wieviel sec soll die Lampe in den Deep Sleep.
-int secBisDeepSleep = 2; 
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-#define LED_PIN 14
-#define NUM_LEDS 24
-CRGB leds[NUM_LEDS];
-
-unsigned long previousMillis;  // speichert die vergangene Zeit in Millisekunden
-unsigned long currentMillis; // speichert später die aktuelle Zeit in Millisekunden für das abarbeiten des Loops.
-
-const unsigned long interval = 20; // die Zeit in Millisekunden zwischen jeder Überprüfung - 20ms sind  50Hz / 50fps
-
-int count = 0; //helfer damit ich jede sec einen Wert Anzeige.
-
-// Speicherplatz für Winkeldaten.
-float jetzigerWinkel[3];
-float letzterWinkel[3];
-float durschnittAbweichung[3];  // kann vermutlich weg
-
-unsigned long startZeitLichtAus = 0;  // Wenn das licht das erste mal aus geht, speichere ich die Laufzeittime und kann diese nutzen um in den DeepSleep zu gehen
-
-
-float differenz; // Differenz jetziger und letzter Winkel.
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 void IRAM_ATTR wakeUp(){ // das IRAM_ATTR braucht man bei dem ESP8266 um eine Interupt Funktion für den ESP klar zumachen, diese funktion rufe ich später auf. Details dazu: https://www.arduinoforum.de/arduino-Thread-Interrupt-Routinren-bei-ESP 
   // startZeitLichtAus = 0;
@@ -183,7 +183,7 @@ void korrektur(boolean firstTime = false){
 
 void runterfahren(){
 
-  setInterrupt(50); // set Wake on Motion Interrupt / Sensitivity; 1(highest sensitivity) - 255
+  setInterrupt(5); // set Wake on Motion Interrupt / Sensitivity; 1(highest sensitivity) - 255
 
   Serial.println("ciao ciao");
 
