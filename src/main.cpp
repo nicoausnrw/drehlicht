@@ -1,5 +1,6 @@
 #include "Arduino.h"
 
+
 //#include <MPU6050_tockn.h>
 #include <MPU6050_light.h>
 #include <Wire.h>
@@ -13,13 +14,13 @@
 
 // Default bei Start
 int hueHelligkeit = 128;
-int hueColor = 108;
+int hueColor = 32; //108;
 int hueSaettigung = 200;
 
 // Drehempfindlichkeit
-int hellFaktor = 6;
-int rgbFaktor = 3;
-int SaettigungFaktor = 3;
+int hellFaktor = 12;
+int rgbFaktor = 6;
+int SaettigungFaktor = 12;
 
 // nach wieviel sec soll die Lampe in den Deep Sleep.
 int secBisDeepSleep = 2; 
@@ -27,6 +28,9 @@ int secBisDeepSleep = 2;
 // LEDs
 #define LED_PIN 12
 #define NUM_LEDS 24
+
+// Erschütterungs Empfindlichkeit
+int shakeFaktor = 20;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -183,7 +187,7 @@ void korrektur(boolean firstTime = false){
 
 void runterfahren(){
 
-  setInterrupt(5); // set Wake on Motion Interrupt / Sensitivity; 1(highest sensitivity) - 255
+  setInterrupt(shakeFaktor); // set Wake on Motion Interrupt / Sensitivity; 1(highest sensitivity) - 255
 
   Serial.println("ciao ciao");
 
@@ -227,7 +231,7 @@ void setLightStyle(int modus, float differenz){
             
             
             case 0: // Steht Modus
-              hueHelligkeit = hueHelligkeit+int( differenz*hellFaktor );
+              hueHelligkeit = hueHelligkeit-int( differenz*hellFaktor );
 
               if (hueHelligkeit > 255){
                 hueHelligkeit = 255;
@@ -282,7 +286,7 @@ void setup() {
 
 
   // SETUP LEDs
-  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS);
+  FastLED.addLeds<WS2812, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(64);
 
 
@@ -290,6 +294,7 @@ void setup() {
 
   Wire.begin();
   mpu6050.begin();
+//  mpu6050.upsideDownMounting(true);
 
   // TODO nicht sicher ob ich das brauche
     writeRegister(MPU6050_PWR_MGT_1, 0);
@@ -306,17 +311,17 @@ void setup() {
 
 void loop() {
 
-if(geradeHochgefahren){
-  geradeHochgefahren = false;
+  if(geradeHochgefahren){
+    geradeHochgefahren = false;
 
 
-  fill_solid(leds, NUM_LEDS, CHSV(hueColor, hueSaettigung, hueHelligkeit));
-  FastLED.show();
-  
-  mpu6050.calcOffsets(true,false);
-  saveWinkel();
+    fill_solid(leds, NUM_LEDS, CHSV(hueColor, hueSaettigung, hueHelligkeit));
+    FastLED.show();
+    
+    //mpu6050.calcOffsets(true,false);
+    saveWinkel();
 
-}
+  }
 
 
 
@@ -337,14 +342,14 @@ if(geradeHochgefahren){
     // TODO genauer die Position vom Glas rausfinden.
     // Welcher Modus ist gerade dran? sprich steht, liegt oder ist das Glas auf dem Kopf.
 
-    if( (abs(jetzigerWinkel[0])+abs(jetzigerWinkel[1]) > 70 && abs(jetzigerWinkel[0])+abs(jetzigerWinkel[1]) < 110 )){
-      modus = 1; // Liegt Modus
-
-    }else if( (abs(jetzigerWinkel[0])+abs(jetzigerWinkel[1]) > 160)){
+    if (abs(jetzigerWinkel[0]) < 45 && abs(jetzigerWinkel[1]) < 45 ){
       modus = 2; // Kopfüber Modus
 
-    }else{
+    }else if( abs(jetzigerWinkel[0]) > 150 && abs(jetzigerWinkel[1]) < 45 ){
       modus = 0; // Steht Modus
+
+    }else{
+      modus = 1; // Liegt Modus
 
     }
 

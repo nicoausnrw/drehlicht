@@ -9,23 +9,23 @@ In Planung ist noch das man mit Schütteln das Glas ein und ausschalten kann und
 
 ## todo
 - Software
-  - wie mache ich das am besten mit dem Kaliebrieren?
-  - Aufräumen
-    - Besser die Lage auslesen (Modus)
-  - DeepSleep
-    - Wenn DeepSleep dann letzte Setting speichern.
-  - Akku Reglung, soll es ein Signal geben wenn der Akku leer geht.
-  - nice to have
-    - Serila Monitor OTA
-    - Update OTA
-  - macht uns irgendwann der Software Bug ein Problem?
-- Hardware
-  - Glas trüb oder nicht???
-  - welcher Akkuregler?
-  - LEDs, welche?
-  - Platine die Komponenten Hält
-  - Hauptschalter mit einbauen
-  - 3D Druck Halterung für alles!
+  - [x] wie mache ich das am besten mit dem Kaliebrieren?
+  - [x] Aufräumen
+    - [x] Besser die Lage auslesen (Modus)
+  - [x] DeepSleep
+    - [ ] Wenn DeepSleep dann letzte Setting speichern.
+  - [ ] Akku Reglung, soll es ein Signal geben wenn der Akku leer geht.
+  - [ ] nice to have
+    - [ ] Serila Monitor OTA
+    - [ ] Update OTA
+  - [ ] macht uns irgendwann der Software Bug ein Problem?
+- [ ] Hardware
+  - [x] Glas trüb oder nicht???
+  - [x] welcher Akkuregler?
+  - [x] LEDs, welche?
+  - [x] Platine die Komponenten Hält
+  - [x]  Hauptschalter mit einbauen
+  - [x] 3D Druck Halterung für alles!
 
 
 
@@ -49,4 +49,3 @@ In Planung ist noch das man mit Schütteln das Glas ein und ausschalten kann und
 - Ladegerät?
 
 ca 35€
-
