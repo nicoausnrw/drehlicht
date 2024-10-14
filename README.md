@@ -1,4 +1,41 @@
-# Shake Glas / Drehlicht
+# Shake Glas / Drehlicht v2 2024
+
+
+
+Diesmal Wechsel auf größeren ESP mit besseren Deep Sleep
+
+
+
+## Modelle die in Frage kommen
+
+
+
+### Seeed Studio XIAO ESP32C3
+
+- Vorteil
+
+  - Preis
+
+  - Größe
+
+  - direkter Akku Anschluss
+
+- Nachteile
+
+  - Akku kann nur über Analogpin ausgelesen werden.
+  - Angeblich nur 50/100 mAh Ladepower, wenn das stimmt **unbrauchbar**
+
+
+
+[Details](https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/)
+
+
+
+
+
+
+
+# Drehlicht v1 2023
 
 Das Drehlicht ist ein Dekolicht welches Akku betrieben ist.
 Dreh man dies auf der Stelle so wird es Heller und Dunkler,
@@ -49,3 +86,22 @@ In Planung ist noch das man mit Schütteln das Glas ein und ausschalten kann und
 - Ladegerät?
 
 ca 35€
+
+## Ablaufplan
+- Drehlicht vorführen
+- Löteinführung
+- Löten der Platine
+  - klein Bauteile?
+  - Pinleisten auf Platine
+  - Pinleiste Microcontroller
+  - Akkufach
+- Schalter
+
+
+
+## noch vorbereiten
+Für den Workshop müsste noch **6x** vorbereitet werden:
+- LEDring Verkabeln (einheitliche Farben die sich gut unterscheiden)
+- Schalter Verkabeln (einheitliche Farben)
+- Status LED MPU entfernen
+-  3D Druck am besten weiß
