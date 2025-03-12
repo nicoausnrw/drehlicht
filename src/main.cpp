@@ -11,6 +11,32 @@
 
 
 
+// DEBUG
+#define PRINTDEBUG 1
+
+
+// damit kann ich schnell wechseln auf was der INT beobachtungs PIN achten soll.
+#define VARIANTE_L  // VARIANTE_H / VARIANTE_L
+
+
+
+#ifdef VARIANTE_H
+    #define WAKEUP_AT ESP_GPIO_WAKEUP_GPIO_HIGH
+    #define WAKEUP_MPU_SETTING 0b00000000
+    #define LOW_OR_HIGH HIGH
+    #define PULL_FOR_LOW_OR_HIGH INPUT_PULLDOWN
+
+
+#elif defined(VARIANTE_L)
+    #define WAKEUP_AT ESP_GPIO_WAKEUP_GPIO_LOW
+    #define WAKEUP_MPU_SETTING 0b10000000
+    
+    #define LOW_OR_HIGH LOW
+    #define PULL_FOR_LOW_OR_HIGH INPUT_PULLUP
+
+#endif
+
+
 // Settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,11 +57,8 @@ int secBisDeepSleep = 2;
 #define LED_PIN 6
 #define NUM_LEDS 24
 
-#define PRINTDEBUG 1
 
-#if
 #define SLEEPBUTTON 0
-#endif
 
 // MOSFET / TRANSISTOR
 #define StandbyMosfet_PIN 3
@@ -100,15 +123,33 @@ void writeRegister(uint16_t reg, byte value){
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+byte readRegister(byte reg) {
+    Wire.beginTransmission(MPU6050_ADDR);
+    Wire.write(reg);
+    Wire.endTransmission();
+    Wire.requestFrom(MPU6050_ADDR, 1);
+    return Wire.read();
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#if PRINTDEBUG
+void printRegisterValues(const std::initializer_list<int>& registers) {
+    Serial.println("Register | Value");
+    Serial.println("----------------");
 
-
-
-
-
-
-
+    for (int reg : registers) {
+        byte value = readRegister(reg);
+        Serial.print(reg);
+        Serial.print("       | ");
+        for (int i = 7; i >= 0; i--) {
+            Serial.print(bitRead(value, i));
+        }
+        Serial.println();
+    }
+}
+#endif
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -186,14 +227,14 @@ digitalWrite(StandbyMosfet_PIN, aktivieren ? HIGH : LOW);
 #define MPU6050_SIGNAL_PATH_RESET 0x68 // Signal Path Reset Register
 
 
+#define MPU6050_WOM_EN            0x06 // Wake on Motion Enable bit
 
 
 
 
-void setInterrupt(byte threshold, byte dauer){
+// die hatte ich eigentlich fleißig erarbeiet, doch weiter unten ist jetzt die Version vom esp2866, eventuell hilft diese das ich das mit dem INt hinbekomme. Komisch das so CFG nicht angepackt wird.
+void setInterrupt__2025Version(byte threshold, byte dauer){
 
-  // Interrupt PIN setzen.
-  pinMode(MPUInterrupt_PIN, INPUT); 
     
   // MPU6050 Interrupt Setup
 
@@ -212,11 +253,29 @@ void setInterrupt(byte threshold, byte dauer){
   writeRegister(MPU6050_ACCEL_CONFIG, 0b00000000);
 
 }
+
+
+void setInterrupt(byte threshold, byte shakeDauer){
+//writeRegister(MPU6050_SIGNAL_PATH_RESET, 0b00000111);  // not(?) needed
+//writeRegister(MPU6050_INT_PIN_CFG, 1<<MPU6050_ACTL); // 1<<MPU6050_LATCH_INT_EN
+//writeRegister(MPU6050_INT_PIN_CFG, 1<<MPU6050_LATCH_INT_EN); // 1<<MPU6050_LATCH_INT_EN
+  writeRegister(MPU6050_ACCEL_CONFIG, 0b00000001);
+  writeRegister(MPU6050_WOM_THR, threshold); 
+  writeRegister(MPU6050_MOT_DUR, 50);  // set duration (LSB = 1 ms) // wie Lang soll "die Bewegung" sein. angabe in ms
+//writeRegister(MPU6050_ACCEL_INTEL_CTRL, 0x15);  // not needed (?)
+  writeRegister(MPU6050_INT_ENABLE, 1<<MPU6050_WOM_EN);
+
+  // jetzt hinzugefügt damit ich festlegen kann ob low oder high weckt
+  writeRegister(MPU6050_INT_PIN_CFG, WAKEUP_MPU_SETTING); // Interrupt aktivieren ---- tellen Sie sicher, dass das Bit 7 (ACTL) im MPU6050_INT_PIN_CFG-Register auf 0 gesetzt ist, um den Interrupt-Pin als aktives High-Signal zu konfigurieren. Verwenden Sie 0b00000000 für das MPU6050_INT_PIN_CFG-Register, um den Interrupt-Pin als Push-Pull und aktives High-Signal zu konfigurieren.
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 void checkInterruptPin() {
-    if (digitalRead(MPUInterrupt_PIN) == HIGH) {
+    if (digitalRead(MPUInterrupt_PIN) == LOW_OR_HIGH) {
         Serial.println("WACKEL WACKEL");
     }
 }
@@ -240,7 +299,7 @@ void runterfahren() {
     standbyStromON(false);
 
     // ESP ins Bett bringen
-    esp_err_t result = esp_deep_sleep_enable_gpio_wakeup((1ULL << MPUInterrupt_PIN), ESP_GPIO_WAKEUP_GPIO_HIGH); 
+    esp_err_t result = esp_deep_sleep_enable_gpio_wakeup((1ULL << MPUInterrupt_PIN), WAKEUP_AT); 
 
     #if PRINTDEBUG
         Serial.println(result == ESP_OK ? "ESP_OK" : "ESP_ERR_INVALID_ARG");
@@ -367,19 +426,24 @@ void setup() {
     mpu6050.begin();
     // writeRegister(MPU6050_PWR_MGT_1, 0b10000000); // MPU FULL RESET
 
-
-    pinMode(MPUInterrupt_PIN, INPUT);
+    // über die Varibale kann ich schnell switchen ob das SETUP für Wakeup bei HIGH oder LOW gesetzt ist.
+    pinMode(MPUInterrupt_PIN, PULL_FOR_LOW_OR_HIGH);
     setInterrupt(shakeFaktor, shakeDauer);
 
 
     #if PRINTDEBUG
+
+        printRegisterValues({55, 56, 57, 58}); // Beispiel: Register 55, 56, 57 und 58 auslesen
+
+
         Serial.println("SETUP ENDE");
     #endif
 }
 
+
 void loop() {
   #if PRINTDEBUG
-    if (SLEEPBUTTON == LOW)
+    if (digitalRead(SLEEPBUTTON) == LOW)
     {
       runterfahren();
     }
@@ -456,8 +520,9 @@ void loop() {
     if (count >= 50 && true){
       count = 0;
 
-      
-      Serial.print("angleX : ");
+      // WERTE DES SENSOR 
+    if(false){
+            Serial.print("angleX : ");
       Serial.print(jetzigerWinkel[0]);
       Serial.print("\t\tangleY : ");
       Serial.print(jetzigerWinkel[1]);
@@ -472,6 +537,11 @@ void loop() {
       
       
       Serial.print("\n");
+
+    }
+      // WERTE DES REGISTERS
+      printRegisterValues({55, 56, 57, 58}); // Beispiel: Register 55, 56, 57 und 58 auslesen
+
     }
   
   }
